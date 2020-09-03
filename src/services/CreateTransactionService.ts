@@ -21,6 +21,13 @@ class CreateTransactionService {
     type,
     category,
   }: Request): Promise<Transaction> {
+    const transactionsRepository = getCustomRepository(TransactionsRepository);
+
+    const balance = await transactionsRepository.getBalance();
+
+    if (type === 'outcome' && value > balance.total)
+      throw new AppError('Value is bigger than the total balance');
+
     const categoryRepository = getRepository(Category);
 
     let transactionCategory = await categoryRepository.findOne({
@@ -36,8 +43,6 @@ class CreateTransactionService {
 
       await categoryRepository.save(transactionCategory);
     }
-
-    const transactionsRepository = getCustomRepository(TransactionsRepository);
 
     const transaction = transactionsRepository.create({
       title,
